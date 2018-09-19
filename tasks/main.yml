@@ -1,0 +1,59 @@
+---
+# tasks file for mariuszczyz.sshd-hardening
+
+- name: Disable root SSH login
+  lineinfile:
+    path: /etc/ssh/sshd_config
+    line: "PermitRootLogin no"
+    regexp: "^PermitRootLogin"
+    state: present
+  when: DISABLE_ROOT == true
+  notify: restart sshd
+
+- name: Adjust idle sessions timeout
+  lineinfile:
+    path: /etc/ssh/sshd_config
+    line: "{{ item.line }}{{ item.value }}"
+    regexp: "^{{ item.line }}"
+    state: present
+  with_items:
+    - { line: 'ClientAliveInterval ', value: '{{ ALIVE_INTERVAL }}' }
+    - { line: 'ClientAliveCountMax ', value: '2' }
+  when: ADJUST_IDLE == true
+  notify: restart sshd
+
+- name: Limit users allowed to SSH
+  lineinfile:
+    path: /etc/ssh/sshd_config
+    line: "AllowUsers {{ SSH_USERS }}"
+    regexp: "^AllowUsers"
+    state: present
+  when: SSH_USERS != ""
+  notify: restart sshd
+
+- name: Change default SSH server port
+  lineinfile:
+    path: /etc/ssh/sshd_config
+    line: "Port {{ SSH_PORT }}"
+    regexp: "^Port"
+    state: present
+  when: SSH_PORT != ""
+  notify: restart sshd
+
+- name: Disable password authentication
+  lineinfile:
+    path: /etc/ssh/sshd_config
+    line: "PasswordAuthentication no"
+    regexp: "^PasswordAuthentication"
+    state: present
+  when: DISABLE_PASSWORD == true
+  notify: restart sshd
+
+- name: Disable X11 Forwarding
+  lineinfile:
+    path: /etc/ssh/sshd_config
+    line: "X11Forwarding no"
+    regexp: "^X11Forwarding"
+    state: present
+  when: DISABLE_X11_FORWARDING == true
+  notify: restart sshd

@@ -1,0 +1,5 @@
+---
+# handlers file for mariuszczyz.sshd-hardening
+
+- name: restart sshd
+  service: name=sshd state=restarted

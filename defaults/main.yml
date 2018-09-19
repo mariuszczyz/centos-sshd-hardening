@@ -1,0 +1,24 @@
+---
+# defaults file for mariuszczyz.sshd-hardening
+
+# set to true if you want to disable root SSH login
+DISABLE_ROOT:
+
+# set to a numerical value in seconds, 300 is a good and balanced target
+ADJUST_IDLE:
+ALIVE_INTERVAL: # idle session timeout, example: 300
+ALIVE_COUNT_MAX: # idle check count, example: 5
+
+# add all usernames allowed to SSH into the server, all users one single line with blank space seperation
+SSH_USERS:
+
+# security by obscurity but anything is better than nothing in limiting SSH service from port scans
+# keep in mind if this is set to anything else than the default 22 the ansible-playbook command will
+# have to be adjusted to account for this change after it's applied
+SSH_PORT: 22
+
+# setting this will make sure only the SSH key owner will be able to SSH, the same way AWS does it
+DISABLE_PASSWORD:
+
+# no X on a server, let's disable this
+DISABLE_X11_FORWARDING:
