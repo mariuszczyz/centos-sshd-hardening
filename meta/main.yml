@@ -1,5 +1,7 @@
 ---
-dependencies: []
+dependencies:
+  - mariuszczyz.centos-common
+
 galaxy_info:
   author: Mariusz Czyz
   description: CentOS 7 SSHd Security Hardening
