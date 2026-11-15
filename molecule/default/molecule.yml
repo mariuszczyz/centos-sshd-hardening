@@ -1,0 +1,45 @@
+---
+dependency:
+  name: galaxy
+driver:
+  name: podman
+platforms:
+  # EL 10 images (Rocky 10, AlmaLinux 10, CentOS Stream 10) need an
+  # x86-64-v3 CPU and are omitted so the suite runs on older hardware.
+  # The role itself supports EL 10; test it on newer CI runners.
+  - name: rocky-9
+    image: docker.io/rockylinux/rockylinux:9
+    command: /usr/sbin/init
+    privileged: true
+    systemd: always
+    pre_build_image: false
+  - name: almalinux-9
+    image: docker.io/library/almalinux:9
+    command: /usr/sbin/init
+    privileged: true
+    systemd: always
+    pre_build_image: false
+  - name: centos-stream-9
+    image: quay.io/centos/centos:stream9
+    command: /usr/sbin/init
+    privileged: true
+    systemd: always
+    pre_build_image: false
+  - name: fedora-44
+    image: docker.io/library/fedora:44
+    command: /usr/sbin/init
+    privileged: true
+    systemd: always
+    pre_build_image: false
+  - name: fedora-45
+    image: docker.io/library/fedora:45
+    command: /usr/sbin/init
+    privileged: true
+    systemd: always
+    pre_build_image: false
+provisioner:
+  name: ansible
+scenario:
+  name: default
+verifier:
+  name: ansible
