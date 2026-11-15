@@ -1,25 +1,26 @@
 ---
-# defaults file for mariuszczyz.sshd-hardening
+# defaults file for centos-sshd-hardening
 
-# set to true if you want to disable root SSH login
-DISABLE_ROOT: true
+# Set to true to deny SSH login for the root account.
+sshd_hardening_disable_root: true
 
-# set to a numerical value in seconds, 300 is a good and balanced target
-ADJUST_IDLE: 300
-ALIVE_INTERVAL: 300 # idle session timeout, example: 300
-ALIVE_COUNT_MAX: 5 # idle check count, example: 5
+# Set to true to apply the client idle timeout settings below.
+sshd_hardening_adjust_idle: true
 
-# add all usernames allowed to SSH into the server, all users one single line with blank space seperation:
-# SSH_USER: bob john joebagofdonuts
-SSH_USERS: user
+# Seconds of idle time before the server sends a keepalive probe.
+sshd_hardening_client_alive_interval: 300
 
-# security by obscurity but anything is better than nothing in limiting SSH service from port scans
-# keep in mind if this is set to anything else than the default 22 the ansible-playbook command will
-# have to be adjusted to account for this change after it's applied
-SSH_PORT: 22
+# Number of failed keepalive probes before the server drops the session.
+sshd_hardening_client_alive_count_max: 2
 
-# setting this will make sure only the SSH key owner will be able to SSH, the same way AWS does it
-DISABLE_PASSWORD: true
+# Users allowed to connect over SSH. An empty list allows all users.
+sshd_hardening_allowed_users: []
 
-# no X on a server, let's disable this
-DISABLE_X11_FORWARDING: true
+# TCP port the SSH server listens on. Changing this can lock you out.
+sshd_hardening_port: 22
+
+# Set to true to accept only key-based authentication. Deploy keys first.
+sshd_hardening_disable_password: true
+
+# Set to true to disable X11 forwarding.
+sshd_hardening_disable_x11_forwarding: true

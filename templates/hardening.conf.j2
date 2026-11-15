@@ -1,0 +1,18 @@
+# Ansible managed by centos-sshd-hardening. Do not edit on the host.
+Port {{ sshd_hardening_port }}
+{% if sshd_hardening_disable_root %}
+PermitRootLogin no
+{% endif %}
+{% if sshd_hardening_adjust_idle %}
+ClientAliveInterval {{ sshd_hardening_client_alive_interval }}
+ClientAliveCountMax {{ sshd_hardening_client_alive_count_max }}
+{% endif %}
+{% if sshd_hardening_allowed_users | length > 0 %}
+AllowUsers {{ sshd_hardening_allowed_users | join(' ') }}
+{% endif %}
+{% if sshd_hardening_disable_password %}
+PasswordAuthentication no
+{% endif %}
+{% if sshd_hardening_disable_x11_forwarding %}
+X11Forwarding no
+{% endif %}

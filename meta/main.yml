@@ -1,18 +1,28 @@
 ---
-dependencies:
-  - mariuszczyz.centos-common
-
 galaxy_info:
   author: Mariusz Czyz
-  description: CentOS 7 SSHd Security Hardening
-  license: BSD
-  min_ansible_version: 2.4
+  description: SSH hardening for Enterprise Linux 9/10 and Fedora
+  license: MIT
+  min_ansible_version: "2.15"
+  namespace: mariuszczyz
+  role_name: centos_sshd_hardening
   platforms:
     - name: EL
       versions:
-        - 7
+        - "9"
+        - "10"
+    - name: Fedora
+      versions:
+        - "43"
+        - "44"
   galaxy_tags:
-    - centos
-    - system
     - ssh
     - security
+    - hardening
+    - system
+    - el
+    - rocky
+    - almalinux
+    - centos
+    - fedora
+dependencies: []

@@ -1,0 +1,19 @@
+# systemd-capable base image for Molecule testing.
+# EL and Fedora container base images ship without systemd; install it here
+# so the sshd restart handler and the verify checks run against a real init.
+FROM {{ item.image }}
+ENV container=oci
+RUN dnf -y install systemd dbus procps-ng iproute python3 sudo \
+    && (dnf -y install systemd-udev || true) \
+    && dnf clean all \
+    && (cd /lib/systemd/system/sysinit.target.wants/ && for i in *; do [ "$i" = systemd-tmpfiles-setup.service ] || rm -f "$i"; done) \
+    && rm -f /lib/systemd/system/multi-user.target.wants/* \
+       /etc/systemd/system/*.wants/* \
+       /lib/systemd/system/local-fs.target.wants/* \
+       /lib/systemd/system/sockets.target.wants/*udev* \
+       /lib/systemd/system/sockets.target.wants/*initctl* \
+       /lib/systemd/system/sysinit.target.wants/systemd-tmpfiles-setup* \
+       /lib/systemd/system/systemd-update-utmp* \
+    && systemctl set-default multi-user.target
+STOPSIGNAL SIGRTMIN+3
+CMD ["/usr/sbin/init"]

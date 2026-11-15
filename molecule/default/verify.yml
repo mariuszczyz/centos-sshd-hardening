@@ -1,0 +1,72 @@
+---
+- name: Verify
+  hosts: all
+  become: true
+  tasks:
+    - name: Read the hardening drop-in
+      ansible.builtin.slurp:
+        src: /etc/ssh/sshd_config.d/00-hardening.conf
+      register: sshd_hardening_dropin
+
+    - name: Assert the drop-in carries every hardening directive
+      ansible.builtin.assert:
+        that:
+          - "'Port 2222' in dropin"
+          - "'PermitRootLogin no' in dropin"
+          - "'ClientAliveInterval 300' in dropin"
+          - "'ClientAliveCountMax 2' in dropin"
+          - "'AllowUsers root' in dropin"
+          - "'PasswordAuthentication no' in dropin"
+          - "'X11Forwarding no' in dropin"
+      vars:
+        dropin: "{{ sshd_hardening_dropin.content | b64decode }}"
+
+    - name: Check the drop-in file mode
+      ansible.builtin.stat:
+        path: /etc/ssh/sshd_config.d/00-hardening.conf
+      register: sshd_hardening_file
+
+    - name: Assert the drop-in is readable only by root
+      ansible.builtin.assert:
+        that:
+          - sshd_hardening_file.stat.mode[-3:] == '600'
+
+    - name: Test the full sshd configuration syntax
+      ansible.builtin.command: /usr/sbin/sshd -t
+      changed_when: false
+      register: sshd_hardening_syntax
+
+    - name: Assert sshd accepts the configuration
+      ansible.builtin.assert:
+        that:
+          - sshd_hardening_syntax.rc == 0
+
+    - name: Dump the effective sshd configuration
+      ansible.builtin.command: sshd -T
+      changed_when: false
+      register: sshd_hardening_effective
+
+    - name: Assert the effective configuration matches the hardening
+      ansible.builtin.assert:
+        that:
+          - "'port 2222' in effective"
+          - "'permitrootlogin no' in effective"
+          - "'passwordauthentication no' in effective"
+      vars:
+        # OpenSSH < 10 prints lowercase keywords in -T output, OpenSSH >= 10.5 prints canonical case.
+        effective: "{{ sshd_hardening_effective.stdout | lower }}"
+
+    - name: Probe the sshd service state without changing it
+      ansible.builtin.systemd_service:
+        name: sshd
+        state: started
+      check_mode: true
+      register: sshd_hardening_active
+
+    - name: Assert sshd is running after the handler restart
+      ansible.builtin.assert:
+        that:
+          - not sshd_hardening_active.changed
+        fail_msg: >-
+          sshd is not active. A started service reports no change in check
+          mode; this host would need a start.

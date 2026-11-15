@@ -1,0 +1,65 @@
+---
+argument_specs:
+  main:
+    short_description: Harden the SSH server through a drop-in configuration file.
+    description:
+      - Writes /etc/ssh/sshd_config.d/00-hardening.conf and restarts sshd.
+      - The role validates the rendered file with sshd -t before it lands.
+    options:
+      sshd_hardening_disable_root:
+        description:
+          - Deny SSH login for the root account by setting PermitRootLogin to no.
+          - Set to false only when root key login is required by operations.
+        type: bool
+        default: true
+        required: false
+      sshd_hardening_adjust_idle:
+        description:
+          - Apply the client idle timeout settings.
+          - Set to false to keep the distribution defaults for idle sessions.
+        type: bool
+        default: true
+        required: false
+      sshd_hardening_client_alive_interval:
+        description:
+          - Seconds of idle time before the server sends a keepalive probe.
+          - Applied only when sshd_hardening_adjust_idle is true.
+        type: int
+        default: 300
+        required: false
+      sshd_hardening_client_alive_count_max:
+        description:
+          - Number of failed keepalive probes before the server drops the session.
+          - Applied only when sshd_hardening_adjust_idle is true.
+        type: int
+        default: 2
+        required: false
+      sshd_hardening_allowed_users:
+        description:
+          - Users allowed to connect over SSH, written as one AllowUsers line.
+          - An empty list allows all users. An incomplete list locks out users who are not named.
+        type: list
+        elements: str
+        default: []
+        required: false
+      sshd_hardening_port:
+        description:
+          - TCP port the SSH server listens on.
+          - Changing this from 22 can lock you out if the new port is not open in the firewall or reachable from your network.
+        type: int
+        default: 22
+        required: false
+      sshd_hardening_disable_password:
+        description:
+          - Accept only key-based authentication by setting PasswordAuthentication to no.
+          - Deploy SSH keys for root or every allowed user first. The role aborts when no authorized_keys file exists.
+        type: bool
+        default: true
+        required: false
+      sshd_hardening_disable_x11_forwarding:
+        description:
+          - Disable X11 forwarding by setting X11Forwarding to no.
+          - Set to false only when GUI applications must tunnel over SSH.
+        type: bool
+        default: true
+        required: false

@@ -1,0 +1,29 @@
+---
+- name: Converge
+  hosts: all
+  become: true
+  pre_tasks:
+    - name: Install openssh-server
+      ansible.builtin.package:
+        name: openssh-server
+        state: present
+    - name: Generate SSH host keys so sshd -t can validate the configuration
+      ansible.builtin.command: ssh-keygen -A
+      changed_when: false
+    - name: Create the root SSH directory
+      ansible.builtin.file:
+        path: /root/.ssh
+        state: directory
+        mode: "0700"
+    - name: Provide a root authorized key so the lockout guard passes
+      ansible.builtin.copy:
+        content: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIvfy6mCqxN8f0dV7q0h1t6r3xk0molecule test key\n"
+        dest: /root/.ssh/authorized_keys
+        mode: "0600"
+        force: true
+  roles:
+    - role: mariuszczyz.centos_sshd_hardening
+  vars:
+    sshd_hardening_port: 2222
+    sshd_hardening_allowed_users:
+      - root

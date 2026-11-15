@@ -1,59 +1,28 @@
 ---
-# tasks file for mariuszczyz.sshd-hardening
+# tasks file for centos-sshd-hardening
 
-- name: Disable root SSH login
-  lineinfile:
-    path: /etc/ssh/sshd_config
-    line: "PermitRootLogin no"
-    regexp: "^PermitRootLogin"
-    state: present
-  when: DISABLE_ROOT == true
-  notify: restart sshd
+- name: Check for authorized SSH keys before disabling password authentication
+  ansible.builtin.stat:
+    path: "{{ (item == 'root') | ternary('/root', '/home/' + item) }}/.ssh/authorized_keys"
+  loop: "{{ (['root'] + sshd_hardening_allowed_users) | unique }}"
+  register: sshd_hardening_key_files
+  when: sshd_hardening_disable_password
 
-- name: Adjust idle sessions timeout
-  lineinfile:
-    path: /etc/ssh/sshd_config
-    line: "{{ item.line }}{{ item.value }}"
-    regexp: "^{{ item.line }}"
-    state: present
-  with_items:
-    - { line: 'ClientAliveInterval ', value: '{{ ALIVE_INTERVAL }}' }
-    - { line: 'ClientAliveCountMax ', value: '2' }
-  when: ADJUST_IDLE == true
-  notify: restart sshd
+- name: Fail when no authorized key would survive a password-authentication shutdown
+  ansible.builtin.assert:
+    that:
+      - sshd_hardening_key_files.results | map(attribute='stat.exists') | select | list | length > 0
+    fail_msg: >-
+      Disabling password authentication without an authorized_keys file for
+      root or an allowed user locks everyone out. Deploy SSH keys first.
+  when: sshd_hardening_disable_password
 
-- name: Limit users allowed to SSH
-  lineinfile:
-    path: /etc/ssh/sshd_config
-    line: "AllowUsers {{ SSH_USERS }}"
-    regexp: "^AllowUsers"
-    state: present
-  when: SSH_USERS != ""
-  notify: restart sshd
-
-- name: Change default SSH server port
-  lineinfile:
-    path: /etc/ssh/sshd_config
-    line: "Port {{ SSH_PORT }}"
-    regexp: "^Port"
-    state: present
-  when: SSH_PORT != ""
-  notify: restart sshd
-
-- name: Disable password authentication
-  lineinfile:
-    path: /etc/ssh/sshd_config
-    line: "PasswordAuthentication no"
-    regexp: "^PasswordAuthentication"
-    state: present
-  when: DISABLE_PASSWORD == true
-  notify: restart sshd
-
-- name: Disable X11 Forwarding
-  lineinfile:
-    path: /etc/ssh/sshd_config
-    line: "X11Forwarding no"
-    regexp: "^X11Forwarding"
-    state: present
-  when: DISABLE_X11_FORWARDING == true
-  notify: restart sshd
+- name: Write the sshd hardening drop-in configuration
+  ansible.builtin.template:
+    src: hardening.conf.j2
+    dest: /etc/ssh/sshd_config.d/00-hardening.conf
+    owner: root
+    group: root
+    mode: "0600"
+    validate: /usr/sbin/sshd -t -f %s
+  notify: Restart sshd
